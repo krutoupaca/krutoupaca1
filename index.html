@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Enhanced 2D Minecraft Game with Additional Blocks</title>
+    <style>
+      body {
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #87ceeb;
+        font-family: Arial, sans-serif;
+      }
+      #gameCanvas {
+        border: 2px solid #000;
+        background-color: #bfefff;
+      }
+      .inventory {
+        position: absolute;
+        top: 10px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        background: rgba(255, 255, 255, 0.7);
+        padding: 10px;
+        border-radius: 8px;
+      }
+      .inventory div {
+        width: 40px;
+        height: 40px;
+        border: 2px solid #000;
+        cursor: pointer;
+        background-size: cover;
+      }
+      .inventory .selected {
+        border: 3px solid #ffd700;
+      }
+      .wood {
+        background-image: url("https://png.klev.club/uploads/posts/2024-05/png-klev-club-0d0z-p-mainkraft-blok-dereva-png-15.png");
+      }
+      .stone {
+        background-image: url("https://d31sxl6qgne2yj.cloudfront.net/wordpress/wp-content/uploads/20190102094846/Minecraft-Stone-Block.jpg");
+      }
+      .grass {
+        background-image: url("https://toppng.com/uploads/thumbnail/block-of-grass-from-the-game-minecraft-minecraft-grass-block-vector-11562868488whfdyakzjr.png");
+      }
+      .sand {
+        background-image: url("https://d31sxl6qgne2yj.cloudfront.net/wordpress/wp-content/uploads/20190102094847/Minecraft-Sand-Block.jpg");
+      }
+      .water {
+        background-image: url("https://static.wikia.nocookie.net/minecraft_gamepedia/images/c/cf/Flowing_Water_%28placeholder_texture%29_BE2.png/revision/latest?cb=20210621115549");
+      }
+      .brick {
+        background-image: url("https://png.klev.club/uploads/posts/2024-04/png-klev-club-oc0u-p-mainkraft-blok-zemli-png-20.png");
+      }
+      .cobblestone {
+        background-image: url("https://i.pinimg.com/736x/bb/a0/8c/bba08c77e72f5f864b97a4d394afb482.jpg");
+      }
+      .diamond {
+        background-image: url("https://www.fractalcamo.com/uploads/5/9/0/2/5902948/s189772745713394276_p3855_i147_w640.jpeg");
+      }
+      .gold {
+        background-image: url("https://eventaya.fr/wp-content/uploads/2024/03/Gold-Ore.webp");
+      }
+      .iron {
+        background-image: url("https://preview.redd.it/76jbhk5spok61.png?width=1600&format=png&auto=webp&s=bff53c1577d6a16a66fbd1f7a714d0b072a6f54e");
+      }
+      .emerald {
+        background-image: url("https://static.planetminecraft.com/files/image/minecraft/texture-pack/2022/688/15763358-unnamed_l.webp");
+      }
+      .nether {
+        background-image: url("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRpc5hIzIKRomK0T05LA-Z9VmcyeYJ6By6mVQ&s");
+      }
+      .quartz {
+        background-image: url("https://png.klev.club/uploads/posts/2024-06/png-klev-club-usnt-p-listva-mainkraft-png-3.png");
+      }
+      .ice {
+        background-image: url("https://wiki.aidancbrady.com/w/images/aidancbrady/3/30/Grid_Glass_Pane.png");
+      }
+      .lava {
+        background-image: url("https://p.novaskin.me/4293373086.png?class=thumbnail");
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div class="inventory">
+      <div class="block wood selected" data-type="wood" title="Wood"></div>
+      <div class="block stone" data-type="stone" title="Stone"></div>
+      <div class="block grass" data-type="grass" title="Grass"></div>
+      <div class="block sand" data-type="sand" title="Sand"></div>
+      <div class="block water" data-type="water" title="Water"></div>
+      <div class="block brick" data-type="brick" title="Brick"></div>
+      <div
+        class="block cobblestone"
+        data-type="cobblestone"
+        title="Cobblestone"
+      ></div>
+      <div class="block diamond" data-type="diamond" title="Diamond"></div>
+      <div class="block gold" data-type="gold" title="Gold"></div>
+      <div class="block iron" data-type="iron" title="Iron"></div>
+      <div class="block emerald" data-type="emerald" title="Emerald"></div>
+      <div class="block nether" data-type="nether" title="Nether Block"></div>
+      <div class="block quartz" data-type="quartz" title="Quartz"></div>
+      <div class="block ice" data-type="ice" title="Ice"></div>
+      <div class="block lava" data-type="lava" title="Lava"></div>
+    </div>
+    <script>
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
+      const blockSize = 40;
+      const playerSize = 30;
+      let playerX = 400;
+      let playerY = 300;
+      let blocks = [];
+      let currentBlockType = "wood";
+
+      // Load images for each block type
+      const blockImages = {
+        wood: new Image(),
+        stone: new Image(),
+        grass: new Image(),
+        sand: new Image(),
+        water: new Image(),
+        brick: new Image(),
+        cobblestone: new Image(),
+        diamond: new Image(),
+        gold: new Image(),
+        iron: new Image(),
+        emerald: new Image(),
+        nether: new Image(),
+        quartz: new Image(),
+        ice: new Image(),
+        lava: new Image(),
+      };
+
+      blockImages.wood.src =
+        "https://png.klev.club/uploads/posts/2024-05/png-klev-club-0d0z-p-mainkraft-blok-dereva-png-15.png";
+      blockImages.stone.src =
+        "https://d31sxl6qgne2yj.cloudfront.net/wordpress/wp-content/uploads/20190102094846/Minecraft-Stone-Block.jpg";
+      blockImages.grass.src =
+        "https://toppng.com/uploads/thumbnail/block-of-grass-from-the-game-minecraft-minecraft-grass-block-vector-11562868488whfdyakzjr.png";
+      blockImages.sand.src =
+        "https://d31sxl6qgne2yj.cloudfront.net/wordpress/wp-content/uploads/20190102094847/Minecraft-Sand-Block.jpg";
+      blockImages.water.src =
+        "https://static.wikia.nocookie.net/minecraft_gamepedia/images/c/cf/Flowing_Water_%28placeholder_texture%29_BE2.png/revision/latest?cb=20210621115549";
+      blockImages.brick.src =
+        "https://png.klev.club/uploads/posts/2024-04/png-klev-club-oc0u-p-mainkraft-blok-zemli-png-20.png";
+      blockImages.cobblestone.src =
+        "https://i.pinimg.com/736x/bb/a0/8c/bba08c77e72f5f864b97a4d394afb482.jpg";
+      blockImages.diamond.src =
+        "https://www.fractalcamo.com/uploads/5/9/0/2/5902948/s189772745713394276_p3855_i147_w640.jpeg";
+      blockImages.gold.src =
+        "https://eventaya.fr/wp-content/uploads/2024/03/Gold-Ore.webp";
+      blockImages.iron.src =
+        "https://preview.redd.it/76jbhk5spok61.png?width=1600&format=png&auto=webp&s=bff53c1577d6a16a66fbd1f7a714d0b072a6f54e";
+      blockImages.emerald.src =
+        "https://static.planetminecraft.com/files/image/minecraft/texture-pack/2022/688/15763358-unnamed_l.webp";
+      blockImages.nether.src =
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRpc5hIzIKRomK0T05LA-Z9VmcyeYJ6By6mVQ&s";
+      blockImages.quartz.src =
+        "https://png.klev.club/uploads/posts/2024-06/png-klev-club-usnt-p-listva-mainkraft-png-3.png";
+      blockImages.ice.src =
+        "https://wiki.aidancbrady.com/w/images/aidancbrady/3/30/Grid_Glass_Pane.png";
+      blockImages.lava.src =
+        "https://p.novaskin.me/4293373086.png?class=thumbnail";
+
+      // Inventory selection
+      document.querySelectorAll(".inventory .block").forEach((block) => {
+        block.addEventListener("click", () => {
+          document
+            .querySelectorAll(".inventory .block")
+            .forEach((b) => b.classList.remove("selected"));
+          block.classList.add("selected");
+          currentBlockType = block.getAttribute("data-type");
+        });
+      });
+
+      // Draw the world
+      function drawWorld() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "green";
+        ctx.fillRect(playerX, playerY, playerSize, playerSize);
+
+        blocks.forEach((block) => {
+          const img = blockImages[block.type];
+          ctx.drawImage(img, block.x, block.y, blockSize, blockSize);
+        });
+      }
+
+      function addBlock(x, y) {
+        if (!blocks.some((block) => block.x === x && block.y === y)) {
+          blocks.push({ x: x, y: y, type: currentBlockType });
+        }
+      }
+
+      document.addEventListener("keydown", (e) => {
+        switch (e.key) {
+          case "ArrowUp":
+            playerY -= blockSize;
+            break;
+          case "ArrowDown":
+            playerY += blockSize;
+            break;
+          case "ArrowLeft":
+            playerX -= blockSize;
+            break;
+          case "ArrowRight":
+            playerX += blockSize;
+            break;
+          case " ":
+            addBlock(playerX, playerY + playerSize + 10);
+            break;
+          case "d":
+            blocks = blocks.filter(
+              (block) =>
+                !(block.x === playerX && block.y === playerY + playerSize + 10)
+            );
+            break;
+        }
+        drawWorld();
+      });
+
+      drawWorld();
+    </script>
+  </body>
+</html>
